@@ -1,8 +1,10 @@
 package com.example.mohamedanter.popularmovies;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -10,7 +12,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
-import android.widget.ListView;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,6 +20,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * Created by Mohamed Anter on 8/22/2015.
@@ -33,11 +35,10 @@ public class PlaceholderFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-        MovieList = new ArrayList<Movie>();
+        myadp = new CustomAdaptor(getActivity(), new ArrayList<Movie>());
         gridView = (GridView) rootView.findViewById(R.id.gridview);
-        String URL_STR="http://api.themoviedb.org/3/discover/movie?sort_by=popularity.desc&api_key=1aa2b2989b33151515585a6ec53e0fa7";
-        GetDataFromServer Task = new GetDataFromServer();
-        Task.execute(URL_STR);
+        gridView.setAdapter(myadp);
+        MovieList = new ArrayList<Movie>();
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -48,6 +49,21 @@ public class PlaceholderFragment extends Fragment {
         });
         return rootView;
     }
+
+    private void updateMovie() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String sort = prefs.getString(getString(R.string.pref_selection_key),
+                getString(R.string.pref_selection_default));
+        String URL_STR = "http://api.themoviedb.org/3/discover/movie?sort_by=popularity.desc&api_key=1aa2b2989b33151515585a6ec53e0fa7";
+        GetDataFromServer Task = new GetDataFromServer();
+        Task.execute(URL_STR, sort);
+    }
+    @Override
+    public void onStart() {
+        super.onStart();
+        updateMovie();
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,7 +72,9 @@ public class PlaceholderFragment extends Fragment {
     }
     public class GetDataFromServer extends AsyncTask<String, Void, String> {
         private final String LOG_TAG = GetDataFromServer.class.getSimpleName();
+        String Sort_Method;
         private String forecastJsonStr = null;
+
         public String GetStr() {
             return forecastJsonStr;
         }
@@ -67,6 +85,7 @@ public class PlaceholderFragment extends Fragment {
             // Will contain the raw JSON response as a string.
             try {
                 URL url = new URL(params[0]);
+                Sort_Method = params[1];
                 // Create the request to OpenWeatherMap, and open the connection
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestMethod("GET");
@@ -112,8 +131,20 @@ public class PlaceholderFragment extends Fragment {
             ParseJSONstr parser = new ParseJSONstr();
             MovieList = new ArrayList<Movie>();
             MovieList = parser.ParseJSON_To_TweetObject(forecastJsonStr);
-            myadp = new CustomAdaptor(getActivity() , MovieList);
+            SortMovies(Sort_Method, MovieList);
+            myadp = new CustomAdaptor(getActivity(), MovieList);
             gridView.setAdapter(myadp);
+        }
+
+        private ArrayList<Movie> SortMovies(String Sort, ArrayList<Movie> Arr) {
+            if (Sort.equals(getString(R.string.pref_selection_highest))) {
+                Collections.sort(Arr, new HighestComparator());
+            } else if (Sort.equals(getString(R.string.pref_selection_popular))) {
+                Collections.sort(Arr, new PopularComparator());
+            } else {
+                Log.d(LOG_TAG, "Sort type not found: " + Sort);
+            }
+            return Arr;
         }
     }
 }
