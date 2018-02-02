@@ -73,18 +73,25 @@
                 android:text="MAKE AS FAVORITE"
                 android:textSize="20dp"/>
         </LinearLayout>
+
+        <ImageView
+            android:id="@+id/imagetailer"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_alignParentTop="true"
+            android:padding="30dp"
+            android:scaleType="fitXY" />
+
+        <TextView
+            android:id="@+id/Trailername"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_toRightOf="@+id/image"
+            android:padding="30dp"
+            android:text="Trailer"
+            android:textSize="35dp"
+            android:textStyle="bold" />
     </RelativeLayout>
-    <ListView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/tailer">
-
-        </ListView>
-    <ListView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/review">
-
-    </ListView>
 
 </LinearLayout>
